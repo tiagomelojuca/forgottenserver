@@ -3,6 +3,7 @@
 
 #include "otpch.h"
 
+#include "accountmanager.h"
 #include "bed.h"
 #include "chat.h"
 #include "combat.h"
@@ -1104,7 +1105,9 @@ void Player::onCreatureAppear(Creature* creature, bool isLogin)
 		}
 
 		g_game.checkPlayersRecord();
-		IOLoginData::updateOnlineStatus(guid, true);
+		if (!accountManager) {
+			IOLoginData::updateOnlineStatus(guid, true);
+		}
 	}
 }
 
@@ -1210,6 +1213,11 @@ void Player::onRemoveCreature(Creature* creature, bool isLogout)
 
 		if (guild) {
 			guild->removeMember(this);
+		}
+
+		if (accountManager) {
+			AccountManager::onLogout(this);
+			return;
 		}
 
 		IOLoginData::updateOnlineStatus(guid, false);
@@ -3521,6 +3529,11 @@ void Player::onIdleStatus()
 
 void Player::onPlacedCreature()
 {
+	if (accountManager) {
+		AccountManager::onLogin(this);
+		return;
+	}
+
 	//scripting event - onLogin
 	if (!g_creatureEvents->playerLogin(this)) {
 		kickPlayer(true);

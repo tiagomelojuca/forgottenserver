@@ -5,6 +5,7 @@
 
 #include "pugicast.h"
 
+#include "accountmanager.h"
 #include "actions.h"
 #include "bed.h"
 #include "configmanager.h"
@@ -517,7 +518,7 @@ ReturnValue Game::getPlayerByNameWildcard(const std::string& s, Player*& player)
 Player* Game::getPlayerByAccount(uint32_t acc)
 {
 	for (const auto& it : players) {
-		if (it.second->getAccount() == acc) {
+		if (it.second->getAccount() == acc && !it.second->isAccountManager()) {
 			return it.second;
 		}
 	}
@@ -3421,6 +3422,13 @@ void Game::playerSay(uint32_t playerId, uint16_t channelId, SpeakClasses type,
 
 	player->resetIdleTime();
 
+	if (player->isAccountManager()) {
+		// only the player itself sees what was typed, it may be a password
+		player->sendCreatureSay(player, TALKTYPE_SAY, text);
+		AccountManager::onSay(player, text);
+		return;
+	}
+
 	if (playerSaySpell(player, type, text)) {
 		return;
 	}
@@ -5545,20 +5553,31 @@ void Game::playerAnswerModalWindow(uint32_t playerId, uint32_t modalWindowId, ui
 
 void Game::addPlayer(Player* player)
 {
+	players[player->getID()] = player;
+
+	// there may be many account managers online, they are not looked up by name or guid
+	if (player->isAccountManager()) {
+		return;
+	}
+
 	const std::string& lowercase_name = asLowerCaseString(player->getName());
 	mappedPlayerNames[lowercase_name] = player;
 	mappedPlayerGuids[player->getGUID()] = player;
 	wildcardTree.insert(lowercase_name);
-	players[player->getID()] = player;
 }
 
 void Game::removePlayer(Player* player)
 {
+	players.erase(player->getID());
+
+	if (player->isAccountManager()) {
+		return;
+	}
+
 	const std::string& lowercase_name = asLowerCaseString(player->getName());
 	mappedPlayerNames.erase(lowercase_name);
 	mappedPlayerGuids.erase(player->getGUID());
 	wildcardTree.remove(lowercase_name);
-	players.erase(player->getID());
 }
 
 void Game::addNpc(Npc* npc)

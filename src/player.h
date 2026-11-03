@@ -394,6 +394,9 @@ class Player final : public Creature, public Cylinder
 		bool isAccessPlayer() const {
 			return group->access;
 		}
+		bool isAccountManager() const {
+			return accountManager;
+		}
 		bool isPremium() const;
 		void setPremiumTime(time_t premiumEndsAt);
 
@@ -1305,6 +1308,7 @@ class Player final : public Creature, public Cylinder
 		bool chaseMode = false;
 		bool secureMode = false;
 		bool inMarket = false;
+		bool accountManager = false;
 		bool wasMounted = false;
 		bool ghostMode = false;
 		bool pzLocked = false;
@@ -1353,6 +1357,7 @@ class Player final : public Creature, public Cylinder
 		friend class Map;
 		friend class Actions;
 		friend class IOLoginData;
+		friend class AccountManager;
 		friend class ProtocolGame;
 };
 

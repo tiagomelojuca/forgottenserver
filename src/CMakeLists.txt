@@ -1,5 +1,6 @@
 set(tfs_SRC
 	${CMAKE_CURRENT_LIST_DIR}/otpch.cpp
+	${CMAKE_CURRENT_LIST_DIR}/accountmanager.cpp
 	${CMAKE_CURRENT_LIST_DIR}/actions.cpp
 	${CMAKE_CURRENT_LIST_DIR}/ban.cpp
 	${CMAKE_CURRENT_LIST_DIR}/baseevents.cpp

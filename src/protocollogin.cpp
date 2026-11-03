@@ -8,6 +8,7 @@
 #include "outputmessage.h"
 #include "tasks.h"
 
+#include "accountmanager.h"
 #include "configmanager.h"
 #include "iologindata.h"
 #include "ban.h"
@@ -32,9 +33,13 @@ void ProtocolLogin::disconnectClient(const std::string& message, uint16_t versio
 void ProtocolLogin::getCharacterList(const std::string& accountName, const std::string& password, const std::string& token, uint16_t version)
 {
 	Account account;
-	if (!IOLoginData::loginserverAuthentication(accountName, password, account)) {
+	if (AccountManager::isLoginAccount(accountName, password)) {
+		account.characters.push_back(AccountManager::NAME);
+	} else if (!IOLoginData::loginserverAuthentication(accountName, password, account)) {
 		disconnectClient("Account name or password is not correct.", version);
 		return;
+	} else if (AccountManager::isEnabled()) {
+		account.characters.push_back(AccountManager::NAME);
 	}
 
 	uint32_t ticks = time(nullptr) / AUTHENTICATOR_PERIOD;

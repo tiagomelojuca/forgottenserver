@@ -122,6 +122,10 @@ class Vocations
 		int32_t getVocationId(const std::string& name) const;
 		uint16_t getPromotedVocation(uint16_t vocationId) const;
 
+		const std::map<uint16_t, Vocation>& getVocations() const {
+			return vocationsMap;
+		}
+
 	private:
 		std::map<uint16_t, Vocation> vocationsMap;
 };

@@ -85,7 +85,7 @@ bool IOLoginData::loginserverAuthentication(const std::string& name, const std::
 	return true;
 }
 
-uint32_t IOLoginData::gameworldAuthentication(const std::string& accountName, const std::string& password, std::string& characterName, std::string& token, uint32_t tokenTime)
+uint32_t IOLoginData::accountAuthentication(const std::string& accountName, const std::string& password, const std::string& token, uint32_t tokenTime)
 {
 	Database& db = Database::getInstance();
 
@@ -110,9 +110,19 @@ uint32_t IOLoginData::gameworldAuthentication(const std::string& accountName, co
 		return 0;
 	}
 
-	uint32_t accountId = result->getNumber<uint32_t>("id");
+	return result->getNumber<uint32_t>("id");
+}
 
-	result = db.storeQuery(fmt::format("SELECT `name` FROM `players` WHERE `name` = {:s} AND `account_id` = {:d} AND `deletion` = 0", db.escapeString(characterName), accountId));
+uint32_t IOLoginData::gameworldAuthentication(const std::string& accountName, const std::string& password, std::string& characterName, std::string& token, uint32_t tokenTime)
+{
+	uint32_t accountId = accountAuthentication(accountName, password, token, tokenTime);
+	if (accountId == 0) {
+		return 0;
+	}
+
+	Database& db = Database::getInstance();
+
+	DBResult_ptr result = db.storeQuery(fmt::format("SELECT `name` FROM `players` WHERE `name` = {:s} AND `account_id` = {:d} AND `deletion` = 0", db.escapeString(characterName), accountId));
 	if (!result) {
 		return 0;
 	}
@@ -609,6 +619,10 @@ bool IOLoginData::saveItems(const Player* player, const ItemBlockList& itemList,
 
 bool IOLoginData::savePlayer(Player* player)
 {
+	if (player->isAccountManager()) {
+		return true;
+	}
+
 	if (player->getHealth() <= 0) {
 		player->changeHealth(1);
 	}

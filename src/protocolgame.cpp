@@ -11,6 +11,7 @@
 
 #include "player.h"
 
+#include "accountmanager.h"
 #include "configmanager.h"
 #include "actions.h"
 #include "game.h"
@@ -129,6 +130,12 @@ void ProtocolGame::release()
 	//dispatcher thread
 	if (player && player->client == shared_from_this()) {
 		player->client.reset();
+
+		//the account manager does not stay in the game without a client
+		if (player->isAccountManager()) {
+			g_game.removeCreature(player);
+		}
+
 		player->decrementReferenceCounter();
 		player = nullptr;
 	}
@@ -240,6 +247,45 @@ void ProtocolGame::login(const std::string& name, uint32_t accountId, OperatingS
 	OutputMessagePool::getInstance().addProtocolToAutosend(shared_from_this());
 }
 
+void ProtocolGame::loginAccountManager(uint32_t accountId, OperatingSystem_t operatingSystem)
+{
+	//dispatcher thread
+	if (g_game.getGameState() == GAME_STATE_CLOSING || g_game.getGameState() == GAME_STATE_CLOSED) {
+		disconnectClient("Server is currently closed.\nPlease try again later.");
+		return;
+	}
+
+	if (accountId != 0) {
+		BanInfo banInfo;
+		if (IOBan::isAccountBanned(accountId, banInfo)) {
+			disconnectClient("Your account has been banned.");
+			return;
+		}
+	}
+
+	player = new Player(getThis());
+	player->setName(AccountManager::NAME);
+
+	player->incrementReferenceCounter();
+	player->setID();
+
+	if (!AccountManager::load(player, accountId)) {
+		disconnectClient("The account manager could not be loaded.");
+		return;
+	}
+
+	player->setOperatingSystem(operatingSystem);
+
+	if (!g_game.placeCreature(player, player->getLoginPosition(), false, true)) {
+		disconnectClient("Temple position is wrong. Contact the administrator.");
+		return;
+	}
+
+	player->lastIP = player->getIP();
+	acceptPackets = true;
+	OutputMessagePool::getInstance().addProtocolToAutosend(shared_from_this());
+}
+
 void ProtocolGame::connect(uint32_t playerId, OperatingSystem_t operatingSystem)
 {
 	eventConnect = 0;
@@ -294,7 +340,7 @@ void ProtocolGame::logout(bool displayEffect, bool forced)
 			}
 
 			//scripting event - onLogout
-			if (!g_creatureEvents->playerLogout(player)) {
+			if (!player->isAccountManager() && !g_creatureEvents->playerLogout(player)) {
 				//Let the script handle the error message
 				return;
 			}
@@ -406,6 +452,20 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage& msg)
 		return;
 	}
 
+	if (AccountManager::isEnabled() && characterName == AccountManager::NAME) {
+		uint32_t accountId = 0;
+		if (!AccountManager::isLoginAccount(accountName, password)) {
+			accountId = IOLoginData::accountAuthentication(accountName, password, token, tokenTime);
+			if (accountId == 0) {
+				disconnectClient("Account name or password is not correct.");
+				return;
+			}
+		}
+
+		g_dispatcher.addTask(createTask(std::bind(&ProtocolGame::loginAccountManager, getThis(), accountId, operatingSystem)));
+		return;
+	}
+
 	uint32_t accountId = IOLoginData::gameworldAuthentication(accountName, password, characterName, token, tokenTime);
 	if (accountId == 0) {
 		disconnectClient("Account name or password is not correct.");
@@ -483,6 +543,20 @@ void ProtocolGame::parsePacket(NetworkMessage& msg)
 
 		if (recvbyte != 0x14) {
 			return;
+		}
+	}
+
+	//the account manager can only talk, look around and logout
+	if (player->isAccountManager()) {
+		switch (recvbyte) {
+			case 0x0F: case 0x14: case 0x1D: case 0x1E: case 0x32:
+			case 0x64: case 0x65: case 0x66: case 0x67: case 0x68: case 0x69: case 0x6A: case 0x6B: case 0x6C: case 0x6D:
+			case 0x6F: case 0x70: case 0x71: case 0x72:
+			case 0x8C: case 0x96: case 0xBE:
+				break;
+
+			default:
+				return;
 		}
 	}
 

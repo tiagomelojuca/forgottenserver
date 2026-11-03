@@ -207,6 +207,8 @@ bool ConfigManager::load()
 	boolean[FREE_PREMIUM] = getGlobalBoolean(L, "freePremium", false);
 	boolean[REPLACE_KICK_ON_LOGIN] = getGlobalBoolean(L, "replaceKickOnLogin", true);
 	boolean[ALLOW_CLONES] = getGlobalBoolean(L, "allowClones", false);
+	boolean[ACCOUNT_MANAGER] = getGlobalBoolean(L, "accountManager", true);
+	boolean[NEW_PLAYER_CHOOSE_VOC] = getGlobalBoolean(L, "newPlayerChooseVoc", false);
 	boolean[ALLOW_WALKTHROUGH] = getGlobalBoolean(L, "allowWalkthrough", true);
 	boolean[MARKET_PREMIUM] = getGlobalBoolean(L, "premiumToCreateMarketOffer", true);
 	boolean[EMOTE_SPELLS] = getGlobalBoolean(L, "emoteSpells", false);
@@ -243,6 +245,9 @@ bool ConfigManager::load()
 
 	integer[MAX_PLAYERS] = getGlobalNumber(L, "maxPlayers");
 	integer[PZ_LOCKED] = getGlobalNumber(L, "pzLocked", 60000);
+	integer[NEW_PLAYER_TOWN_ID] = getGlobalNumber(L, "newPlayerTownId", 1);
+	integer[NEW_PLAYER_LEVEL] = getGlobalNumber(L, "newPlayerLevel", 1);
+	integer[NEW_PLAYER_MAGIC_LEVEL] = getGlobalNumber(L, "newPlayerMagicLevel", 0);
 	integer[DEFAULT_DESPAWNRANGE] = Monster::despawnRange = getGlobalNumber(L, "deSpawnRange", 2);
 	integer[DEFAULT_DESPAWNRADIUS] = Monster::despawnRadius = getGlobalNumber(L, "deSpawnRadius", 50);
 	integer[DEFAULT_WALKTOSPAWNRADIUS] = getGlobalNumber(L, "walkToSpawnRadius", 15);

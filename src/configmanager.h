@@ -52,6 +52,8 @@ class ConfigManager
 			ONLY_INVITED_CAN_MOVE_HOUSE_ITEMS,
 			REMOVE_ON_DESPAWN,
 			PLAYER_CONSOLE_LOGS,
+			ACCOUNT_MANAGER,
+			NEW_PLAYER_CHOOSE_VOC,
 
 			LAST_BOOLEAN_CONFIG /* this must be the last one */
 		};
@@ -118,6 +120,9 @@ class ConfigManager
 			VIP_PREMIUM_LIMIT,
 			DEPOT_FREE_LIMIT,
 			DEPOT_PREMIUM_LIMIT,
+			NEW_PLAYER_TOWN_ID,
+			NEW_PLAYER_LEVEL,
+			NEW_PLAYER_MAGIC_LEVEL,
 
 			LAST_INTEGER_CONFIG /* this must be the last one */
 		};
